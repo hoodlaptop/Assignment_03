@@ -1,11 +1,13 @@
 ﻿#pragma once
 #include <iostream>
+#include <algorithm>
 
 template <typename T>
 class Inventory
 {
 public:
     Inventory(int capacity = 10);
+    Inventory(const Inventory<T>& other);
     
     ~Inventory();
     
@@ -14,6 +16,11 @@ public:
     int GetSize() const;
     int GetCapacity() const;
     void PrintInfo() const;
+    void Assign(const Inventory<T>& other);
+    void Resize(int newCapacity);
+
+    template <typename Compare>
+    void SortItems(Compare comp);
 
 private:
     T* pItems_;
@@ -35,6 +42,19 @@ Inventory<T>::Inventory(int capacity)
 }
 
 template <typename T>
+Inventory<T>::Inventory(const Inventory<T>& other)
+{
+    capacity_ = other.capacity_;
+    size_ = other.size_;
+    pItems_ = new T[capacity_];
+    for (int i = 0; i < size_; ++i)
+    {
+        pItems_[i] = other.pItems_[i];
+    }
+    std::cout << "인벤토리 복사 완료" << std::endl;
+}
+
+template <typename T>
 Inventory<T>::~Inventory()
 {
     delete[] pItems_;
@@ -46,8 +66,7 @@ void Inventory<T>::AddItem(const T& item)
 {
     if (size_ >= capacity_)
     {
-        std::cout << "인벤토리가 꽉 찼습니다!" << std::endl;
-        return;
+        Resize(capacity_ * 2);
     }
 
     pItems_[size_] = item;
@@ -85,4 +104,50 @@ void Inventory<T>::PrintInfo() const
     {
         pItems_[i].PrintInfo();
     }
+}
+
+template <typename T>
+void Inventory<T>::Assign(const Inventory<T>& other)
+{
+    if (this == &other) return;
+    
+    delete[] pItems_;
+    
+    capacity_ = other.capacity_;
+    size_ = other.size_;
+    pItems_ = new T[capacity_];
+    for (int i = 0; i < size_; i++)
+    {
+        pItems_[i] = other.pItems_[i];
+    }
+}
+
+template <typename T>
+void Inventory<T>::Resize(int newCapacity)
+{
+    if (newCapacity <= 0)
+    {
+        newCapacity = 1;
+    }
+
+    T* newItems = new T[newCapacity];
+
+    int copyCount = (size_ < newCapacity) ? size_ : newCapacity;
+    for (int i = 0; i < copyCount; i++)
+    {
+        newItems[i] = pItems_[i];
+    }
+
+    delete[] pItems_;
+
+    pItems_ = newItems;
+    capacity_ = newCapacity;
+    size_ = copyCount;
+}
+
+template <typename T>
+template <typename Compare>
+void Inventory<T>::SortItems(Compare comp)
+{
+    std::sort(pItems_, pItems_ + size_, comp);
 }
